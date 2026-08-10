@@ -25,7 +25,7 @@ fn main() -> anyhow::Result<()> {
     //    filesystem recursion. main.rs shouldn't call walker.rs directly.
     let result = match args.mode {
         Mode::Tree => tree::run(&args.path, args.max_depth),
-        Mode::Top => report::run(&args.path, args.top_n),
+        Mode::Top => report::run(&args.path, args.top_n, args.max_depth, args.size_unit()),
     };
 
     // 3. Handle the Result returned by whichever mode you called.
