@@ -127,7 +127,6 @@ pub fn build_tree(path: &Path) -> anyhow::Result<Node> {
 // this is a good exercise in Rust borrowing across recursion. Once you
 // bring in rayon, this signature will need to change (mutable shared
 // state doesn't parallelize for free) — worth noticing that tension now.
-
 pub fn dir_size(path: &Path, results: &mut Vec<(PathBuf, u64)>) -> io::Result<u64> {
     let metadata = fs::symlink_metadata(path)?;
 
@@ -135,13 +134,39 @@ pub fn dir_size(path: &Path, results: &mut Vec<(PathBuf, u64)>) -> io::Result<u6
         return Ok(metadata.len());
     }
 
-    if metadata.is_dir() {
+    let mut total: u64 = 0;
 
+    if metadata.is_dir() {
+        match fs::read_dir(path) {
+            Ok(entries) => {
+                for entry in entries {
+                    let entry = match entry {
+                        Ok(entry) => entry,
+                        Err(e) => {
+                            warn!("Skipping unreadable entry: {}", e);
+                            continue;
+                        }
+                    };
+
+                    let child_path = entry.path();
+                    match dir_size(&child_path, results) {
+                        Ok(child_size) => total += child_size,
+                        Err(err) => warn!("Skipping {}: {}", child_path.display(), err),
+                    }
+                }
+            }
+            Err(e) => {
+                warn!("Error reading directory {}", path.display());
+                debug!("Underlying error: {}", e);
+            }
+        };
+
+        // Report THIS directory's own total, computed locally above
+        results.push((path.to_path_buf(), total));
     }
 
-    todo!("recursive size computation, flat results accumulation")
+    Ok(total)
 }
-
 
 // ---- Parallel variant (v2, after sequential works) ---------------------
 //
