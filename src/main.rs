@@ -24,7 +24,7 @@ fn main() -> anyhow::Result<()> {
     //    Both of these will internally call walker.rs to do the actual
     //    filesystem recursion. main.rs shouldn't call walker.rs directly.
     let result = match args.mode {
-        Mode::Tree => tree::run(&args.path, args.max_depth),
+        Mode::Tree => tree::run(&args.path, args.max_depth, args.size_unit()),
         Mode::Top => report::run(&args.path, args.top_n, args.max_depth, args.size_unit()),
     };
 
