@@ -1,9 +1,16 @@
+use crate::humanize::SizeUnit;
+use clap::{ArgAction, Parser};
 use std::path::PathBuf;
-use clap::Parser;
+
+#[derive(clap::ValueEnum, Clone)]
+pub enum Mode {
+    Tree,
+    Top,
+}
 
 #[derive(Parser)]
 #[command(name = "rdu", about = "A directory tree / disk usage analyzer")]
- pub struct Cli {
+pub struct Cli {
     /// Path to scan (defaults to current directory)
     #[arg(default_value = ".")]
     pub path: PathBuf,
@@ -20,13 +27,22 @@ use clap::Parser;
     #[arg(long)]
     pub max_depth: Option<usize>,
 
+    /// Use SI (International System) units (e.g., MB instead of MiB)
+    #[arg(long, action = ArgAction::SetTrue)]
+    si: bool,
+
     // Use rayon to parallelize the walk (once implemented)
     // #[arg(long)]
     // pub parallel: bool,
 }
 
-#[derive(clap::ValueEnum, Clone)]
-pub enum Mode {
-    Tree,
-    Top,
+impl Cli {
+    /// Return the [`SizeUnit`] to use for formatting byte counts
+    pub fn size_unit(&self) -> SizeUnit {
+        if self.si {
+            SizeUnit::Decimal
+        } else {
+            SizeUnit::Binary
+        }
+    }
 }
