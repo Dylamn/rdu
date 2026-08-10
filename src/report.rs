@@ -31,19 +31,37 @@ pub fn run(
     let mut results: Vec<(PathBuf, u64)> = vec![];
 
     walker::dir_size(path, &mut results)?;
-    
-    let mut results = results.iter().filter(|entry| {
-        match entry.0.strip_prefix(path) {
-            Ok(stripped) => stripped.components().count() <= max_depth,
-            Err(_) => false,
-        }
-    }).collect::<Vec<_>>();
+
+    results.retain(|(entry_path, _)| {
+        entry_path.strip_prefix(path)
+            .map(|stripped| stripped.components().count() <= max_depth)
+            .unwrap_or(false) // Shouldn't happen normally
+    });
 
     results.sort_by(|a, b| b.1.cmp(&a.1));
+    results.truncate(top_n); // no-op if `top_n >= results.len()`, doesn't panic
 
-    for (path, size) in results.iter().take(top_n) {
-        let row = format!("{}\t{}", path.display(), humanize::format(*size, size_unit));
-        println!("{}", row);
+    // Find the longest path of the top
+    let max_path_len = results
+        .iter()
+        .map(|(path, _)| path.display().to_string().len())
+        .max()
+        .unwrap_or(0);
+
+    let sizes: Vec<String> = results
+        .iter()
+        .map(|(_, size)| humanize::format(*size, size_unit))
+        .collect();
+    let max_size_len = sizes.iter().map(|s| s.len()).max().unwrap_or(0);
+
+    for ((path, _), size_str) in results.iter().zip(sizes.iter()) {
+        println!(
+            "{:<path_width$}\t{:>size_width$}",
+            path.display(),
+            size_str,
+            path_width = max_path_len,
+            size_width = max_size_len
+        );
     }
 
     Ok(())
