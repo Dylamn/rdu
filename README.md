@@ -94,11 +94,11 @@ parallelize the walk later without touching any output code.
 - [x] Sequential recursive walker with post-order size aggregation
 - [x] Symlink handling (skip, don't follow)
 - [x] Graceful handling of unreadable directories
-- [ ] Tree-mode pretty printing with box-drawing characters
-- [ ] Top-N report mode
-- [ ] `--max-depth` support
+- [x] Tree-mode pretty printing with box-drawing characters
+- [x] Top-N report mode
+- [x] `--max-depth` support
 - [ ] Parallel walking with `rayon` (`par_iter` over directory entries)
-- [ ] Human-readable size formatting with tests
+- [x] Human-readable size formatting with tests
 
 ## Why "rdu"?
 
